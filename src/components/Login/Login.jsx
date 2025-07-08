@@ -1,19 +1,22 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); 
+  const navigate = useNavigate();     
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Handle login logic here
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("http://localhost:5000/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -102,6 +105,8 @@ const Login = () => {
           >
             Sign In
           </button>
+          {error && <p className="text-red-500 text-center mt-4">{error}</p>}
+
         </div>
 
         <div className="text-center">
