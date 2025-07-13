@@ -8,6 +8,7 @@ import Login from './components/Login/Login.jsx'
 import ProfilePage from './components/ProfilePage/ProfilePage.jsx'
 import Signup from './components/Signup/Signup.jsx'
 import Match from './components/Match/Match.jsx'
+import ChatRoom from './components/ChatRoom/ChatRoom.jsx'
 
 const router = createBrowserRouter([{
   path : '/',
@@ -32,6 +33,10 @@ const router = createBrowserRouter([{
     {
       path: '/match',
       element: <Match />
+    },
+    {
+      path: '/chat/:roomId',
+      element: <ChatRoom />
     }
   ]
 }, ])
