@@ -1,464 +1,189 @@
-// import React, { useEffect, useState, useRef } from "react";
-// import { useParams } from "react-router-dom";
-// import socket from "../../socket";
 
-// export default function ChatRoom() {
+// import React, { useEffect, useState } from 'react';
+// import { useParams } from 'react-router-dom';
+// import io from 'socket.io-client';
+
+// const socket = io('http://localhost:5000'); // your backend
+
+// const ChatRoom = () => {
 //   const { problemId } = useParams();
-//   const [message, setMessage] = useState("");
-//   const [chatLog, setChatLog] = useState([]);
-//   const [onlineUsers, setOnlineUsers] = useState(0);
+//   const [room, setRoom] = useState(null);
 //   const [isMatched, setIsMatched] = useState(false);
-//   const lastProblemId = useRef(null);
-//   const joinEmitted = useRef(false);
+//   const [message, setMessage] = useState('');
+//   const [messages, setMessages] = useState([]);
 
-//   useEffect(() => {
-//     joinEmitted.current = false;
-//     // Function to join problem
-//     const joinProblem = () => {
-//       if (!joinEmitted.current) {
-//         console.log("Joining problem:", problemId);
-//         socket.emit("join-problem", problemId);
-//         lastProblemId.current = problemId;
-//         joinEmitted.current = true;
-//       }
+
+
+//     useEffect(() => {
+//     socket.emit('join-problem', problemId);
+
+//     const handleReceive = (msg) => {
+//       setMessages((prev) => [...prev, msg]);
 //     };
-
-//     if (socket.connected) {
-//       joinProblem();
-//     } else {
-//       socket.on("connect", joinProblem);
-//     }
-
-//     // Listen for messages
-//     socket.on("chat-message", (data) => {
-//       console.log("Received message:", data);
-//       // System message handling
-//       if (data.username === "System") {
-//         // LeetCode link system message
-//         if (data.message.startsWith("Problem Link:")) {
-//           setChatLog((prev) => [
-//             ...prev,
-//             {
-//               text: data.message,
-//               username: data.username,
-//               timestamp: new Date().toLocaleTimeString(),
-//               isLink: true,
-//             },
-//           ]);
-//           return;
-//         }
-//         // Partner matched
-//         if (data.message.includes("Partner matched!")) {
-//           setIsMatched(true);
-//         }
-//         // Matching buddy
-//         if (data.message.includes("Matching buddy")) {
-//           setIsMatched(false);
-//         }
-//         // Partner disconnected
-//         if (data.message.includes("Your partner has disconnected")) {
-//           setIsMatched(false);
-//         }
-//         setChatLog((prev) => [
-//           ...prev,
-//           {
-//             text: data.message,
-//             username: data.username,
-//             timestamp: new Date().toLocaleTimeString(),
-//             isSystem: true,
-//           },
-//         ]);
-//         return;
-//       }
-//       // Normal message
-//       setChatLog((prev) => [
-//         ...prev,
-//         {
-//           text: data.message,
-//           username: data.username,
-//           timestamp: new Date().toLocaleTimeString(),
-//         },
-//       ]);
-//     });
-
-//     socket.on("matched", () => {
-//       console.log("Matched!");
+//     socket.on('match-found', ({ room }) => {
+//       setRoom(room);
 //       setIsMatched(true);
+//       setMessages(prev => [...prev, '✅ Matched! You can now chat.']);
 //     });
+//     socket.on('receive-message', handleReceive);
 
-//     socket.on("online-users", (count) => {
-//       console.log("Online users:", count);
-//       setOnlineUsers(count);
-//     });
-
-//     // Cleanup
 //     return () => {
-//       // Leave previous problem room if any
-//       if (lastProblemId.current) {
-//         socket.emit("leave-problem", lastProblemId.current);
-//       }
-//       socket.off("connect", joinProblem);
-//       socket.off("chat-message");
-//       socket.off("matched");
-//       socket.off("online-users");
+//       socket.off('receive-message', handleReceive); // ✅ safe cleanup
 //     };
 //   }, [problemId]);
 
-//   const sendMessage = () => {
-//     if (!message.trim()) return;
-//     console.log("Sending message:", message);
-//     socket.emit("chat-message", { message });
-//     setMessage("");
+//   const handleSend = () => {
+//     if (message.trim() && isMatched && room) {
+//       socket.emit('send-message', { room, message });
+//       setMessages((prev) => [...prev, `You: ${message}`]);
+//       setMessage('');
+//     }
 //   };
 
 //   return (
-//     // ... your existing JSX
-//     <div className="min-h-screen bg-gray-900 text-white p-6">
-//       <div className="max-w-4xl mx-auto">
-//         <header className="mb-6">
-//           <h2 className="text-3xl font-bold">Problem #{problemId} Chat</h2>
-//           <p className="text-gray-400 mt-1">👥 {onlineUsers} online</p>
-//           <p className="text-sm text-blue-400">
-//             {isMatched ? "✅ Partner matched!" : "⏳ Looking for a buddy..."}
-//           </p>
-//         </header>
+//     <div className="p-4 max-w-xl mx-auto">
+//       <h2 className="text-xl font-bold mb-4">Chat Room: {problemId}</h2>
 
-//         <div className="bg-gray-800 p-4 rounded-lg h-96 overflow-y-auto space-y-2 mb-4">
-//           {chatLog.map((msg, idx) => (
-//             <div key={idx} className="text-sm">
-//               <div className="flex justify-between">
-//                 <span className={`font-bold ${msg.username === "System" ? "text-yellow-400" : "text-blue-300"}`}>{msg.username}</span>
-//                 <span className="text-gray-400">{msg.timestamp}</span>
-//               </div>
-//               {msg.isLink ? (
-//                 <a
-//                   href={msg.text.replace("Problem Link: ", "").trim()}
-//                   target="_blank"
-//                   rel="noopener noreferrer"
-//                   className="text-green-400 underline"
-//                 >
-//                   {msg.text}
-//                 </a>
-//               ) : (
-//                 <p className={msg.isSystem ? "text-yellow-300" : "text-white"}>{msg.text}</p>
-//               )}
-//             </div>
-//           ))}
-//         </div>
+//       <div className="border p-2 h-64 overflow-y-auto mb-2 bg-gray-100">
+//         {messages.map((msg, idx) => (
+//           <div key={idx} className="mb-1">{msg}</div>
+//         ))}
+//         {!isMatched && <div className="text-gray-500 italic">⏳ Waiting for another user to join...</div>}
+//       </div>
 
-//         <div className="flex gap-4">
-//           <input
-//             className="flex-1 p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none"
-//             value={message}
-//             onChange={(e) => setMessage(e.target.value)}
-//             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-//             placeholder="Type a message..."
-//           />
-//           <button
-//             onClick={sendMessage}
-//             className="bg-blue-600 px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-//           >
-//             Send
-//           </button>
-//         </div>
+//       <div className="flex gap-2">
+//         <input
+//           className="border p-2 flex-1"
+//           value={message}
+//           onChange={(e) => setMessage(e.target.value)}
+//           placeholder={isMatched ? 'Type a message...' : 'Waiting for a match...'}
+//           disabled={!isMatched}
+//         />
+//         <button
+//           onClick={handleSend}
+//           className={`px-4 py-2 rounded ${isMatched ? 'bg-blue-500 text-white' : 'bg-gray-400 text-white cursor-not-allowed'}`}
+//           disabled={!isMatched}
+//         >
+//           Send
+//         </button>
 //       </div>
 //     </div>
 //   );
-// }
-// //hi
+// };
 
-// import React, { useEffect, useState, useRef, useCallback } from "react";
-// import { useParams } from "react-router-dom";
-// import socketService from "../../socket.js"; // Use the new socket service
+// export default ChatRoom;
 
-// export default function ChatRoom() {
+// ----------------------------------------------Completely working-----------------------------------------------------------
+
+// import React, { useEffect, useState } from 'react';
+// import { useParams } from 'react-router-dom';
+// import io from 'socket.io-client';
+
+// const socket = io('http://localhost:5000'); // your backend
+
+// const ChatRoom = () => {
 //   const { problemId } = useParams();
-//   const [message, setMessage] = useState("");
-//   const [chatLog, setChatLog] = useState([]);
-//   const [onlineUsers, setOnlineUsers] = useState(0);
+//   const [room, setRoom] = useState(null);
 //   const [isMatched, setIsMatched] = useState(false);
-//   const [connectionStatus, setConnectionStatus] = useState("connecting");
-//   const [isJoining, setIsJoining] = useState(false);
-  
-//   // Refs to prevent duplicate operations
-//   const hasJoinedRef = useRef(false);
-//   const currentProblemRef = useRef(null);
-//   const socketRef = useRef(null);
-//   const listenersSetupRef = useRef(false);
+//   const [message, setMessage] = useState('');
+//   const [messages, setMessages] = useState([]);
 
-//   // Memoized event handlers to prevent recreation
-//   const handleConnect = useCallback(() => {
-//     console.log("Socket connected successfully");
-//     setConnectionStatus("connected");
+//   useEffect(() => {
+//     // Reset state when problemId changes
+//     setRoom(null);
+//     setIsMatched(false);
+//     setMessages([]);
     
-//     // Join problem if not already joined
-//     if (problemId && !hasJoinedRef.current && currentProblemRef.current === problemId) {
-//       console.log("Auto-joining problem on connect:", problemId);
-//       setIsJoining(true);
-//       socketRef.current.emit("join-problem", problemId);
-//       hasJoinedRef.current = true;
-//       setIsJoining(false);
-//     }
+//     // Remove all previous listeners first
+//     socket.off('match-found');
+//     socket.off('receive-message');
+//     socket.off('partner-disconnected');
+    
+//     socket.emit('join-problem', problemId);
+
+//     const handleMatchFound = ({ room }) => {
+//       // Only process if this room belongs to current problemId
+//       if (room === `room-${problemId}`) {
+//         setRoom(room);
+//         setIsMatched(true);
+//         setMessages(prev => [...prev, '✅ Matched! You can now chat.']);
+//       }
+//     };
+
+//     const handleReceiveMessage = (msg) => {
+//       setMessages((prev) => [...prev, `Partner: ${msg}`]);
+//     };
+
+//     const handlePartnerDisconnected = () => {
+//       setMessages(prev => [...prev, '❌ Partner disconnected']);
+//       setIsMatched(false);
+//     };
+
+//     socket.on('match-found', handleMatchFound);
+//     socket.on('receive-message', handleReceiveMessage);
+//     socket.on('partner-disconnected', handlePartnerDisconnected);
+
+//     return () => {
+//       socket.off('match-found', handleMatchFound);
+//       socket.off('receive-message', handleReceiveMessage);
+//       socket.off('partner-disconnected', handlePartnerDisconnected);
+//     };
 //   }, [problemId]);
 
-//   const handleDisconnect = useCallback((reason) => {
-//     console.log("Socket disconnected:", reason);
-//     setConnectionStatus("disconnected");
-//     setIsMatched(false);
-//     hasJoinedRef.current = false;
-//   }, []);
-
-//   const handleChatMessage = useCallback((data) => {
-//     console.log("Received message:", data);
-    
-//     const newMessage = {
-//       text: data.message,
-//       username: data.username,
-//       timestamp: new Date().toLocaleTimeString(),
-//       isSystem: data.username === "System",
-//       isLink: data.username === "System" && data.message.startsWith("Problem Link:")
-//     };
-
-//     // Handle system messages for matching status
-//     if (data.username === "System") {
-//       if (data.message.includes("Partner matched!")) {
-//         setIsMatched(true);
-//       } else if (data.message.includes("Matching buddy") || data.message.includes("disconnected")) {
-//         setIsMatched(false);
-//       }
+//   const handleSend = () => {
+//     if (message.trim() && isMatched && room) {
+//       socket.emit('send-message', { room, message });
+//       setMessages((prev) => [...prev, `You: ${message}`]);
+//       setMessage('');
 //     }
+//   };
 
-//     setChatLog(prev => [...prev, newMessage]);
-//   }, []);
-
-//   const handleMatched = useCallback(() => {
-//     console.log("Matched event received");
-//     setIsMatched(true);
-//   }, []);
-
-//   const handleWaiting = useCallback(() => {
-//     console.log("Waiting event received");
-//     setIsMatched(false);
-//   }, []);
-
-//   const handleOnlineUsers = useCallback((count) => {
-//     console.log("Online users update:", count);
-//     setOnlineUsers(count);
-//   }, []);
-
-//   const handleConnectError = useCallback((error) => {
-//     console.error("Connection error:", error);
-//     setConnectionStatus("error");
-//   }, []);
-
-//   const setupSocketListeners = useCallback((socket) => {
-//     if (listenersSetupRef.current) {
-//       console.log("Listeners already setup, skipping");
-//       return;
+//   const handleKeyPress = (e) => {
+//     if (e.key === 'Enter') {
+//       handleSend();
 //     }
-
-//     console.log("Setting up socket listeners");
-    
-//     // Remove any existing listeners first
-//     socket.off("connect");
-//     socket.off("disconnect");
-//     socket.off("chat-message");
-//     socket.off("matched");
-//     socket.off("waiting");
-//     socket.off("online-users");
-//     socket.off("connect_error");
-
-//     // Add fresh listeners
-//     socket.on("connect", handleConnect);
-//     socket.on("disconnect", handleDisconnect);
-//     socket.on("chat-message", handleChatMessage);
-//     socket.on("matched", handleMatched);
-//     socket.on("waiting", handleWaiting);
-//     socket.on("online-users", handleOnlineUsers);
-//     socket.on("connect_error", handleConnectError);
-
-//     listenersSetupRef.current = true;
-//   }, [handleConnect, handleDisconnect, handleChatMessage, handleMatched, handleWaiting, handleOnlineUsers, handleConnectError]);
-
-//   const joinProblem = useCallback(() => {
-//     if (!problemId || hasJoinedRef.current || isJoining) {
-//       console.log("Skipping join - already joined or in progress");
-//       return;
-//     }
-
-//     if (!socketRef.current || !socketRef.current.connected) {
-//       console.log("Socket not connected, cannot join");
-//       return;
-//     }
-
-//     console.log("Joining problem:", problemId);
-//     setIsJoining(true);
-//     socketRef.current.emit("join-problem", problemId);
-//     hasJoinedRef.current = true;
-//     setIsJoining(false);
-//   }, [problemId, isJoining]);
-
-//   // Main effect for socket connection and problem joining
-//   useEffect(() => {
-//     console.log("ChatRoom effect running for problemId:", problemId);
-
-//     // Reset state when problem changes
-//     if (currentProblemRef.current !== problemId) {
-//       console.log("Problem changed, resetting state");
-//       setChatLog([]);
-//       setIsMatched(false);
-//       setOnlineUsers(0);
-//       hasJoinedRef.current = false;
-//       currentProblemRef.current = problemId;
-//     }
-
-//     // Get or create socket
-//     const socket = socketService.connect();
-//     socketRef.current = socket;
-
-//     // Setup listeners
-//     setupSocketListeners(socket);
-
-//     // Join problem if connected
-//     if (socket.connected) {
-//       joinProblem();
-//     }
-
-//     // Cleanup function
-//     return () => {
-//       console.log("ChatRoom cleanup");
-      
-//       // Leave problem room
-//       if (hasJoinedRef.current && currentProblemRef.current && socketRef.current) {
-//         console.log("Leaving problem:", currentProblemRef.current);
-//         socketRef.current.emit("leave-problem", currentProblemRef.current);
-//         hasJoinedRef.current = false;
-//       }
-
-//       // Don't disconnect the socket here - let it be reused
-//       listenersSetupRef.current = false;
-//     };
-//   }, [problemId, setupSocketListeners, joinProblem]);
-
-//   const sendMessage = useCallback(() => {
-//     if (!message.trim() || !socketRef.current?.connected) {
-//       console.log("Cannot send message - empty or not connected");
-//       return;
-//     }
-    
-//     console.log("Sending message:", message);
-//     socketRef.current.emit("chat-message", { message: message.trim() });
-//     setMessage("");
-//   }, [message]);
-
-//   const handleKeyPress = useCallback((e) => {
-//     if (e.key === "Enter" && !e.shiftKey) {
-//       e.preventDefault();
-//       sendMessage();
-//     }
-//   }, [sendMessage]);
+//   };
 
 //   return (
-//     <div className="min-h-screen bg-gray-900 text-white p-6">
-//       <div className="max-w-4xl mx-auto">
-//         <header className="mb-6">
-//           <h2 className="text-3xl font-bold">Problem #{problemId} Chat</h2>
-//           <div className="flex items-center gap-4 mt-2">
-//             <p className="text-gray-400">👥 {onlineUsers} online</p>
-//             <p className={`text-sm px-2 py-1 rounded ${
-//               connectionStatus === "connected" ? "bg-green-600" : 
-//               connectionStatus === "error" ? "bg-red-600" : "bg-yellow-600"
-//             }`}>
-//               {connectionStatus === "connected" ? "🟢 Connected" : 
-//                connectionStatus === "error" ? "🔴 Error" : "🟡 Connecting..."}
-//             </p>
-//             {isJoining && <p className="text-sm text-blue-400">Joining room...</p>}
-//           </div>
-//           <p className={`text-sm mt-1 ${isMatched ? "text-green-400" : "text-yellow-400"}`}>
-//             {isMatched ? "✅ Partner matched! Start chatting!" : "⏳ Looking for a buddy..."}
-//           </p>
-//         </header>
+//     <div className="p-4 max-w-xl mx-auto">
+//       <h2 className="text-xl font-bold mb-4">Chat Room: Problem {problemId}</h2>
 
-//         <div className="bg-gray-800 p-4 rounded-lg h-96 overflow-y-auto space-y-3 mb-4">
-//           {chatLog.length === 0 ? (
-//             <div className="text-gray-500 text-center py-8">
-//               {connectionStatus === "connected" ? 
-//                 "Waiting for messages..." : 
-//                 "Connecting to chat..."
-//               }
-//             </div>
-//           ) : (
-//             chatLog.map((msg, idx) => (
-//               <div key={`${idx}-${msg.timestamp}`} className="text-sm">
-//                 <div className="flex justify-between items-start">
-//                   <span className={`font-bold ${
-//                     msg.username === "System" ? "text-yellow-400" : 
-//                     msg.username === "You" ? "text-blue-300" : "text-green-300"
-//                   }`}>
-//                     {msg.username}
-//                   </span>
-//                   <span className="text-gray-400 text-xs">{msg.timestamp}</span>
-//                 </div>
-//                 {msg.isLink ? (
-//                   <a
-//                     href={msg.text.replace("Problem Link: ", "").trim()}
-//                     target="_blank"
-//                     rel="noopener noreferrer"
-//                     className="text-green-400 underline hover:text-green-300"
-//                   >
-//                     {msg.text}
-//                   </a>
-//                 ) : (
-//                   <p className={`mt-1 ${
-//                     msg.isSystem ? "text-yellow-300 italic" : "text-white"
-//                   }`}>
-//                     {msg.text}
-//                   </p>
-//                 )}
-//               </div>
-//             ))
-//           )}
-//         </div>
+//       <div className="border p-2 h-64 overflow-y-auto mb-2 bg-gray-100">
+//         {messages.map((msg, idx) => (
+//           <div key={idx} className="mb-1">{msg}</div>
+//         ))}
+//         {!isMatched && <div className="text-gray-500 italic">⏳ Waiting for another user to join...</div>}
+//       </div>
 
-//         <div className="flex gap-4">
-//           <input
-//             className="flex-1 p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:border-blue-500"
-//             value={message}
-//             onChange={(e) => setMessage(e.target.value)}
-//             onKeyDown={handleKeyPress}
-//             placeholder={
-//               connectionStatus !== "connected" ? "Connecting..." :
-//               !isMatched ? "Waiting for partner..." : 
-//               "Type a message..."
-//             }
-//             disabled={connectionStatus !== "connected"}
-//           />
-//           <button
-//             onClick={sendMessage}
-//             disabled={!message.trim() || connectionStatus !== "connected"}
-//             className="bg-blue-600 px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-//           >
-//             Send
-//           </button>
-//         </div>
-
-//         {/* Debug info - remove in production */}
-//         <div className="mt-4 text-xs text-gray-500">
-//           Debug: Socket ID: {socketRef.current?.id || 'Not connected'} | 
-//           Joined: {hasJoinedRef.current ? 'Yes' : 'No'} |
-//           Problem: {currentProblemRef.current}
-//         </div>
+//       <div className="flex gap-2">
+//         <input
+//           className="border p-2 flex-1"
+//           value={message}
+//           onChange={(e) => setMessage(e.target.value)}
+//           onKeyPress={handleKeyPress}
+//           placeholder={isMatched ? 'Type a message...' : 'Waiting for a match...'}
+//           disabled={!isMatched}
+//         />
+//         <button
+//           onClick={handleSend}
+//           className={`px-4 py-2 rounded ${isMatched ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-400 text-white cursor-not-allowed'}`}
+//           disabled={!isMatched}
+//         >
+//           Send
+//         </button>
 //       </div>
 //     </div>
 //   );
-// }
+// };
 
-// src/pages/ChatPage.jsx
-
-
+// export default ChatRoom;
 
 
-import React, { useEffect, useState } from 'react';
+// ----------------------------------------------Completely working-----------------------------------------------------------
+
+
+
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import io from 'socket.io-client';
 
@@ -470,79 +195,272 @@ const ChatRoom = () => {
   const [isMatched, setIsMatched] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [isCodeMode, setIsCodeMode] = useState(false);
+  const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
 
-  // useEffect(() => {
-  //   socket.emit('join-problem', problemId);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-    // socket.on('match-found', ({ room }) => {
-    //   setRoom(room);
-    //   setIsMatched(true);
-    //   setMessages(prev => [...prev, '✅ Matched! You can now chat.']);
-    // });
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-  //   socket.on('receive-message', (msg) => {
-  //     setMessages((prev) => [...prev, `Partner: ${msg}`]);
-  //   });
-
-  //   return () => {
-  //     socket.disconnect();
-  //   };
-  // }, [problemId]);
-
-  //////////--------------working with small bug----------/////
-    useEffect(() => {
+  useEffect(() => {
+    // Reset state when problemId changes
+    setRoom(null);
+    setIsMatched(false);
+    setMessages([]);
+    
+    // Remove all previous listeners first
+    socket.off('match-found');
+    socket.off('receive-message');
+    socket.off('partner-disconnected');
+    
     socket.emit('join-problem', problemId);
 
-    const handleReceive = (msg) => {
-      setMessages((prev) => [...prev, msg]);
+    const handleMatchFound = ({ room }) => {
+      // Only process if this room belongs to current problemId
+      if (room === `room-${problemId}`) {
+        setRoom(room);
+        setIsMatched(true);
+        setMessages(prev => [...prev, { 
+          type: 'system', 
+          content: '✅ Matched! You can now chat and share code.',
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+      }
     };
-    socket.on('match-found', ({ room }) => {
-      setRoom(room);
-      setIsMatched(true);
-      setMessages(prev => [...prev, '✅ Matched! You can now chat.']);
-    });
-    socket.on('receive-message', handleReceive);
+
+    const handleReceiveMessage = (msgData) => {
+      setMessages((prev) => [...prev, {
+        type: msgData.type || 'text',
+        content: msgData.content || msgData,
+        sender: 'partner',
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+    };
+
+    const handlePartnerDisconnected = () => {
+      setMessages(prev => [...prev, { 
+        type: 'system', 
+        content: '❌ Partner disconnected',
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+      setIsMatched(false);
+    };
+
+    socket.on('match-found', handleMatchFound);
+    socket.on('receive-message', handleReceiveMessage);
+    socket.on('partner-disconnected', handlePartnerDisconnected);
 
     return () => {
-      socket.off('receive-message', handleReceive); // ✅ safe cleanup
+      socket.off('match-found', handleMatchFound);
+      socket.off('receive-message', handleReceiveMessage);
+      socket.off('partner-disconnected', handlePartnerDisconnected);
     };
   }, [problemId]);
-  ////////////////////////------------------------///////////////////
 
   const handleSend = () => {
     if (message.trim() && isMatched && room) {
-      socket.emit('send-message', { room, message });
-      setMessages((prev) => [...prev, `You: ${message}`]);
+      const messageData = {
+        type: isCodeMode ? 'code' : 'text',
+        content: message,
+        timestamp: new Date().toLocaleTimeString()
+      };
+
+      socket.emit('send-message', { room, message: messageData });
+      setMessages((prev) => [...prev, {
+        ...messageData,
+        sender: 'you'
+      }]);
       setMessage('');
+      setIsCodeMode(false);
     }
   };
 
-  return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Chat Room: {problemId}</h2>
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !isCodeMode) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
-      <div className="border p-2 h-64 overflow-y-auto mb-2 bg-gray-100">
-        {messages.map((msg, idx) => (
-          <div key={idx} className="mb-1">{msg}</div>
-        ))}
-        {!isMatched && <div className="text-gray-500 italic">⏳ Waiting for another user to join...</div>}
+  const MessageBubble = ({ msg, index }) => {
+    const isSystem = msg.type === 'system';
+    const isYou = msg.sender === 'you';
+    const isCode = msg.type === 'code';
+
+    if (isSystem) {
+      return (
+        <div key={index} className="flex justify-center my-4">
+          <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
+            {msg.content}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={index} className={`flex mb-4 ${isYou ? 'justify-end' : 'justify-start'}`}>
+        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+          isYou 
+            ? 'bg-blue-500 text-white rounded-br-md' 
+            : 'bg-white text-gray-800 rounded-bl-md shadow-md border'
+        }`}>
+          <div className="flex items-center justify-between mb-1">
+            <span className={`text-xs font-medium ${isYou ? 'text-blue-100' : 'text-gray-500'}`}>
+              {isYou ? 'You' : 'Partner'}
+            </span>
+            <span className={`text-xs ${isYou ? 'text-blue-100' : 'text-gray-400'}`}>
+              {msg.timestamp}
+            </span>
+          </div>
+          {isCode ? (
+            <div className="mt-2">
+              <div className={`text-xs mb-1 ${isYou ? 'text-blue-100' : 'text-gray-500'}`}>
+                📝 Code Snippet
+              </div>
+              <pre className={`text-sm p-2 rounded overflow-x-auto ${
+                isYou ? 'bg-blue-600 text-blue-50' : 'bg-gray-50 text-gray-800'
+              }`}>
+                <code>{msg.content}</code>
+              </pre>
+            </div>
+          ) : (
+            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+          )}
+        </div>
       </div>
+    );
+  };
 
-      <div className="flex gap-2">
-        <input
-          className="border p-2 flex-1"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder={isMatched ? 'Type a message...' : 'Waiting for a match...'}
-          disabled={!isMatched}
-        />
-        <button
-          onClick={handleSend}
-          className={`px-4 py-2 rounded ${isMatched ? 'bg-blue-500 text-white' : 'bg-gray-400 text-white cursor-not-allowed'}`}
-          disabled={!isMatched}
-        >
-          Send
-        </button>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="container mx-auto max-w-4xl h-screen flex flex-col">
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Problem #{problemId}
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {isMatched ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    Connected & Ready to collaborate
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                    Searching for a coding partner...
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-500">Room</div>
+              <div className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                {room || 'Waiting...'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Messages Container */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="max-w-2xl mx-auto">
+            {messages.map((msg, idx) => (
+              <MessageBubble key={idx} msg={msg} index={idx} />
+            ))}
+            
+            {!isMatched && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
+                  <span className="text-2xl">🔍</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                  Looking for your coding buddy...
+                </h3>
+                <p className="text-gray-500 text-center max-w-md">
+                  We're finding another developer to work on Problem #{problemId} with you. 
+                  This usually takes just a few seconds!
+                </p>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Input Area */}
+        <div className="bg-white/80 backdrop-blur-sm border-t border-gray-200 p-4">
+          <div className="max-w-2xl mx-auto">
+            {/* Mode Toggle */}
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                onClick={() => setIsCodeMode(!isCodeMode)}
+                className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                  isCodeMode 
+                    ? 'bg-purple-100 text-purple-700 border border-purple-300' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                disabled={!isMatched}
+              >
+                <span>{isCodeMode ? '💻' : '💬'}</span>
+                {isCodeMode ? 'Code Mode' : 'Text Mode'}
+              </button>
+            </div>
+
+            {/* Input */}
+            <div className="flex gap-3">
+              <div className="flex-1 relative">
+                {isCodeMode ? (
+                  <textarea
+                    ref={textareaRef}
+                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none resize-none transition-colors font-mono text-sm"
+                    rows="4"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder={isMatched ? 'Paste your code here...' : 'Waiting for match...'}
+                    disabled={!isMatched}
+                  />
+                ) : (
+                  <input
+                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none transition-colors"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder={isMatched ? 'Type your message...' : 'Waiting for match...'}
+                    disabled={!isMatched}
+                  />
+                )}
+              </div>
+              
+              <button
+                onClick={handleSend}
+                className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                  isMatched && message.trim()
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+                disabled={!isMatched || !message.trim()}
+              >
+                <span className="flex items-center gap-2">
+                  {isCodeMode ? '📤' : '💬'}
+                  Send
+                </span>
+              </button>
+            </div>
+
+            {isCodeMode && (
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                💡 Tip: Use Shift+Enter for new lines in code mode
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
