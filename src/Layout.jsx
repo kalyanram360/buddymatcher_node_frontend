@@ -20,9 +20,9 @@
 
 import React from "react";
 import { useLocation } from "react-router-dom";
-import Header from "./components/header/header";
-import Footer from "./components/Footer/footer";
-import Sidebar from "./components/Sidebar/Sidebar";
+import Header from "./components/header/header.jsx";
+import Footer from "./components/Footer/footer.jsx";
+import Sidebar from "./components/Sidebar/Sidebar.jsx";
 import { Outlet } from "react-router-dom";
 
 function Layout() {
