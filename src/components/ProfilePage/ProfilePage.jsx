@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+const BACKEND_URL = "https://buddymatcher-node.onrender.com" // Fallback to localhost 
 const userString = localStorage.getItem("user");
 const user = userString ? JSON.parse(userString) : null;
 const avatar = user ? user.avatar : "https://via.placeholder.com/50x50/4F46E5/ffffff?text=JD";
@@ -21,7 +21,7 @@ const ProfilePage = () => {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/auth/protect", {
+        const res = await fetch(`${BACKEND_URL}/auth/protect`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -57,7 +57,7 @@ const ProfilePage = () => {
         }
 
         console.log("Fetching user data for:", username);
-        const userRes = await fetch(`http://localhost:5000/problems/user/${username}`);
+        const userRes = await fetch(`${BACKEND_URL}/problems/user/${username}`);
         const userJson = await userRes.json();
 
         if (userRes.ok) {

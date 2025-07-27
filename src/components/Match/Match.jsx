@@ -1,7 +1,7 @@
 // pages/ProblemSelection.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+const BACKEND_URL = "https://buddymatcher-node.onrender.com"
 const ProblemSelection = () => {
   const navigate = useNavigate();
   useEffect(() => {
@@ -14,7 +14,7 @@ const ProblemSelection = () => {
         }
 
         try {
-          const res = await fetch("http://localhost:5000/auth/protect", {
+          const res = await fetch(`${BACKEND_URL}/auth/protect`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -50,7 +50,7 @@ const ProblemSelection = () => {
           }
 
           console.log("Fetching user data for:", username);
-          const userRes = await fetch(`http://localhost:5000/problems/user/${username}`);
+          const userRes = await fetch(`${BACKEND_URL}/problems/user/${username}`);
           const userJson = await userRes.json();
 
           if (userRes.ok) {
@@ -74,7 +74,7 @@ const ProblemSelection = () => {
 
   const fetchActiveProblems = async () => {
     try {
-      const res = await fetch("http://localhost:5000/problems/show");
+      const res = await fetch(`${BACKEND_URL}/problems/show`);
       const data = await res.json();
       setActiveProblems(data.active_problems || {});
     } catch (err) {

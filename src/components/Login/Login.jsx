@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+const BACKEND_URL = "https://buddymatcher-node.onrender.com" // Fallback to localhost 
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(""); 
   const navigate = useNavigate();     
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Handle login logic here
     try {
-      const res = await fetch("http://localhost:5000/auth/login", {
+      const res = await fetch(`${BACKEND_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

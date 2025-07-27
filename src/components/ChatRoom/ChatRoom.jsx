@@ -287,9 +287,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import io from 'socket.io-client';
-
+// import backend url from .env file
+const BACKEND_URL = "https://buddymatcher-node.onrender.com"// Fallback to localhost if not set
 // Connect to your backend server
-const socket = io('http://localhost:5000'); // Replace with your backend URL
+const socket = io(BACKEND_URL);
 
 const ChatRoom = () => {
   const { problemId } = useParams();

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+ // Load environment variables from .env file
+const BACKEND_URL = "https://buddymatcher-node.onrender.com" // Fallback to localhost 
 
 const Signup = () => {
   const [username, setUsername] = useState("");
@@ -12,7 +14,7 @@ const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/auth/signup", {
+      const res = await fetch(`${BACKEND_URL}/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
