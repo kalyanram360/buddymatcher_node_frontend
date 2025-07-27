@@ -1,125 +1,12 @@
-// import React from "react";
 
 
-// useEffect(() => {
-//   const fetchUser = async () => {
-//     const token = localStorage.getItem("token");
-//     if (!token) return;
-
-//     const res = await fetch("/api/auth/me", {
-//       method: "GET",
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-
-//     const data = await res.json();
-
-//     if (res.ok) {
-//       // setUser(data); // success: show profile
-//     } else {
-//       console.error(data.message); // invalid/expired token
-//       // optionally redirect to login
-//     }
-//   };
-
-//   // fetchUser();
-// }, []);
-
-
-// const ProfilePage = () => {
-//   // Simulated user data
-//   const user = {
-//     username: "kalyan_dev",
-//     email: "kalyan@example.com",
-//     avatar: "https://i.pravatar.cc/150?img=13", // fake avatar
-//     friends: [
-//       { name: "Arjun", avatar: "https://i.pravatar.cc/150?img=32" },
-//       { name: "Priya", avatar: "https://i.pravatar.cc/150?img=45" },
-//       { name: "Dev", avatar: "https://i.pravatar.cc/150?img=12" },
-//     ],
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gray-900 text-white p-6">
-//       {/* Profile Header */}
-//       <div className="max-w-4xl mx-auto bg-gray-800 rounded-xl shadow-xl p-8 flex items-center gap-6 mb-10">
-//         <img
-//           src={user.avatar}
-//           alt="profile"
-//           className="w-24 h-24 rounded-full border-4 border-blue-500"
-//         />
-//         <div>
-//           <h2 className="text-3xl font-bold">{user.username}</h2>
-//           <p className="text-gray-400">{user.email}</p>
-//         </div>
-//       </div>
-
-//       {/* Friends List */}
-//       <div className="max-w-4xl mx-auto">
-//         <h3 className="text-2xl font-semibold mb-4">Coding Buddies</h3>
-//         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-//           {user.friends.map((friend, index) => (
-//             <div
-//               key={index}
-//               className="bg-gray-800 p-4 rounded-lg flex items-center gap-4 hover:bg-gray-700 transition"
-//             >
-//               <img
-//                 src={friend.avatar}
-//                 alt={friend.name}
-//                 className="w-12 h-12 rounded-full"
-//               />
-//               <span className="text-lg">{friend.name}</span>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-
-//       {/* Additional section: optional */}
-//       <div className="max-w-4xl mx-auto mt-10">
-//         <h3 className="text-xl font-semibold mb-2">Upcoming Match</h3>
-//         <div className="bg-gray-800 p-4 rounded-lg">
-//           <p className="text-gray-300">You’re matched with <strong>Arjun</strong> to solve <em>“Longest Palindromic Substring”</em> today at 7:00 PM.</p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default ProfilePage;
-
-
-// useEffect(() => {
-//   const fetchUser = async () => {
-//     const token = localStorage.getItem("token");
-//     if (!token) return;
-
-//     const res = await fetch("/api/auth/me", {
-//       method: "GET",
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-
-//     const data = await res.json();
-
-//     if (res.ok) {
-//       setUser(data); // success: show profile
-//     } else {
-//       console.error(data.message); // invalid/expired token
-//       // optionally redirect to login
-//     }
-//   };
-
-//   fetchUser();
-// }, []);
-
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const [user_details, setUserDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -129,70 +16,139 @@ const ProfilePage = () => {
         return;
       }
 
-      const res = await fetch("http://localhost:5000/auth/protect", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      try {
+        const res = await fetch("http://localhost:5000/auth/protect", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      if (!res.ok) {
-        console.error("JWT verification failed");
-        navigate("/login"); // Redirect if token is invalid
+        if (!res.ok) {
+          console.error("JWT verification failed");
+          navigate("/login");
+          return;
+        }
+
+        const userString = localStorage.getItem("user");
+        if (!userString) {
+          console.error("No user data found in localStorage");
+          navigate("/login");
+          return;
+        }
+
+        let username = null;
+        try {
+          const user = JSON.parse(userString);
+          username = user.username;
+          if (!username) {
+            console.error("Username not found in user object");
+            navigate("/login");
+            return;
+          }
+        } catch (err) {
+          console.error("Failed to parse user from localStorage", err);
+          navigate("/login");
+          return;
+        }
+
+        console.log("Fetching user data for:", username);
+        const userRes = await fetch(`http://localhost:5000/problems/user/${username}`);
+        const userJson = await userRes.json();
+
+        if (userRes.ok) {
+          setUserDetails(userJson);
+        } else {
+          console.error("Failed to fetch user details", userJson);
+        }
+      } catch (err) {
+        console.error("Fetch failed", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUser(); // ✅ call this
+    fetchUser();
   }, [navigate]);
 
-  // Simulated dummy user data (for UI only)
-  const user = {
-    username: "kalyan_dev",
-    email: "kalyan@example.com",
-    avatar: "https://i.pravatar.cc/150?img=13",
-    friends: [
-      { name: "Arjun", avatar: "https://i.pravatar.cc/150?img=32" },
-      { name: "Priya", avatar: "https://i.pravatar.cc/150?img=45" },
-      { name: "Dev", avatar: "https://i.pravatar.cc/150?img=12" },
-    ],
-  };
+  // Show loading spinner while fetching data
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error message if user data couldn't be loaded
+  if (!user_details) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-2">Failed to load profile</h2>
+          <p className="text-gray-400 mb-4">Unable to fetch user details</p>
+          <button 
+            onClick={() => navigate("/login")}
+            className="px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  console.log(user_details);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       {/* Profile Header */}
       <div className="max-w-4xl mx-auto bg-gray-800 rounded-xl shadow-xl p-8 flex items-center gap-6 mb-10">
         <img
-          src={user.avatar}
+          src="https://via.placeholder.com/50x50/4F46E5/ffffff?text=JD"
           alt="profile"
           className="w-24 h-24 rounded-full border-4 border-blue-500"
         />
         <div>
-          <h2 className="text-3xl font-bold">{user.username}</h2>
-          <p className="text-gray-400">{user.email}</p>
+          <h2 className="text-3xl font-bold">{user_details.username || "Unknown User"}</h2>
+          <p className="text-gray-400">{user_details.email || "No email provided"}</p>
         </div>
       </div>
 
       {/* Friends List */}
       <div className="max-w-4xl mx-auto">
         <h3 className="text-2xl font-semibold mb-4">Coding Buddies</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {user.friends.map((friend, index) => (
-            <div
-              key={index}
-              className="bg-gray-800 p-4 rounded-lg flex items-center gap-4 hover:bg-gray-700 transition"
-            >
-              <img
-                src={friend.avatar}
-                alt={friend.name}
-                className="w-12 h-12 rounded-full"
-              />
-              <span className="text-lg">{friend.name}</span>
-            </div>
-          ))}
-        </div>
+        {user_details.friends && user_details.friends.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {user_details.friends.map((friend, index) => (
+              <div
+                key={index}
+                className="bg-gray-800 p-4 rounded-lg flex items-center gap-4 hover:bg-gray-700 transition"
+              >
+                <img
+                  src={`https://ui-avatars.com/api/?name=${friend}&background=6B7280&color=fff&size=48`}
+                  alt={friend}
+                  className="w-12 h-12 rounded-full"
+                />
+                <span className="text-lg">{friend}</span>
+
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-gray-800 rounded-lg p-8 text-center">
+            <div className="text-gray-400 text-4xl mb-4">👥</div>
+            <p className="text-gray-400 text-lg">No coding buddies yet</p>
+            <p className="text-gray-500 text-sm mt-2">Start connecting with other developers!</p>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;
