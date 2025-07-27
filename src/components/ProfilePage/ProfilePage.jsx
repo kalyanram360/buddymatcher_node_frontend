@@ -3,6 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const userString = localStorage.getItem("user");
+const user = userString ? JSON.parse(userString) : null;
+const avatar = user ? user.avatar : "https://via.placeholder.com/50x50/4F46E5/ffffff?text=JD";
+
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [user_details, setUserDetails] = useState(null);
@@ -109,7 +113,7 @@ const ProfilePage = () => {
       {/* Profile Header */}
       <div className="max-w-4xl mx-auto bg-gray-800 rounded-xl shadow-xl p-8 flex items-center gap-6 mb-10">
         <img
-          src="https://via.placeholder.com/50x50/4F46E5/ffffff?text=JD"
+          src={avatar}
           alt="profile"
           className="w-24 h-24 rounded-full border-4 border-blue-500"
         />

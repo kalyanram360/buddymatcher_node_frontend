@@ -3,9 +3,74 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const ProblemSelection = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+      
+      const fetchUser = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        try {
+          const res = await fetch("http://localhost:5000/auth/protect", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!res.ok) {
+            console.error("JWT verification failed");
+            navigate("/login");
+            return;
+          }
+
+          const userString = localStorage.getItem("user");
+          if (!userString) {
+            console.error("No user data found in localStorage");
+            navigate("/login");
+            return;
+          }
+
+          let username = null;
+          try {
+            const user = JSON.parse(userString);
+            username = user.username;
+            if (!username) {
+              console.error("Username not found in user object");
+              navigate("/login");
+              return;
+            }
+          } catch (err) {
+            console.error("Failed to parse user from localStorage", err);
+            navigate("/login");
+            return;
+          }
+
+          console.log("Fetching user data for:", username);
+          const userRes = await fetch(`http://localhost:5000/problems/user/${username}`);
+          const userJson = await userRes.json();
+
+          if (userRes.ok) {
+            setUserDetails(userJson);
+          } else {
+            console.error("Failed to fetch user details", userJson);
+          }
+        } catch (err) {
+          console.error("Fetch failed", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchUser();
+    }, [navigate]);
+
+
   const [problemId, setProblemId] = useState("");
   const [activeProblems, setActiveProblems] = useState({});
-  const navigate = useNavigate();
 
   const fetchActiveProblems = async () => {
     try {

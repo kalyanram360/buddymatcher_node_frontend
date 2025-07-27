@@ -29,7 +29,7 @@ function Layout() {
     const location = useLocation();
     
     // Define routes that should show header instead of sidebar
-    const headerRoutes = ['/', '/login', '/home'];
+    const headerRoutes = ['/', '/login', '/signup'];
     const showHeader = headerRoutes.includes(location.pathname);
 
     if (showHeader) {
@@ -37,7 +37,7 @@ function Layout() {
         return (
             <>
                 <Header />
-                <main className="pt-20">
+                <main className="">
                     <Outlet />
                 </main>
                 <Footer />
@@ -50,13 +50,16 @@ function Layout() {
         <div className="flex min-h-screen bg-[#0A1929]">
             <Sidebar />
             <div className="flex-1 flex flex-col ml-64"> {/* ml-64 to account for sidebar width */}
-                <main className="flex-1 p-6">
+                <main className="">
                     <Outlet />
                 </main>
-                <Footer />
+                {/* <Footer /> */}
             </div>
         </div>
     );
 }
 
 export default Layout;
+
+// flex-1 flex flex-col ml-64
+// flex min-h-screen
