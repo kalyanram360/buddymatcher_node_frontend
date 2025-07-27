@@ -20,8 +20,8 @@
 
 import React from "react";
 import { useLocation } from "react-router-dom";
-import Header from "./components/header/header.jsx";
-import Footer from "./components/Footer/footer.jsx";
+import Header from "./components/Header/Header.jsx";
+import Footer from "./components/Footer/Footer.jsx";
 import Sidebar from "./components/Sidebar/Sidebar.jsx";
 import { Outlet } from "react-router-dom";
 
