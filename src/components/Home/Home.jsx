@@ -26,8 +26,9 @@
 
 
 import React from "react";
-
+import { useNavigate } from "react-router-dom";
 const HeroSection = () => {
+  const navigate = useNavigate();
   return (
     <main className="relative min-h-screen bg-[#0A1929] text-white flex items-center justify-center overflow-hidden">
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
@@ -39,7 +40,7 @@ const HeroSection = () => {
           together in real-time. Level up your problem-solving skills through
           collaboration.
         </p>
-        <button className="px-12 py-4 rounded-lg text-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300 transform hover:scale-105 cursor-pointer whitespace-nowrap shadow-lg hover:shadow-blue-500/50 font-semibold">
+        <button className="px-12 py-4 rounded-lg text-lg bg-blue-500 hover:bg-blue-600 transition-all duration-300 transform hover:scale-105 cursor-pointer whitespace-nowrap shadow-lg hover:shadow-blue-500/50 font-semibold" onClick={() => navigate("/match")}>
           Get Started
         </button>
       </div>
