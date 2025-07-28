@@ -355,6 +355,21 @@ const ChatRoom = () => {
       }]);
     };
 
+    // const handlePartnerDisconnected = () => {
+    //   setMessages(prev => [...prev, { 
+    //     type: 'system', 
+    //     content: '❌ Partner disconnected. Searching for a new partner...',
+    //     timestamp: new Date().toLocaleTimeString()
+    //   }]);
+    //   setIsMatched(false);
+    //   setRoomStatus('searching');
+    //   setRoom(null);
+      
+    //   // Automatically try to rejoin after 1 second
+    //   setTimeout(() => {
+    //     socket.emit('join-problem', problemId);
+    //   }, 1000);
+    // };
     const handlePartnerDisconnected = () => {
       setMessages(prev => [...prev, { 
         type: 'system', 
@@ -365,10 +380,10 @@ const ChatRoom = () => {
       setRoomStatus('searching');
       setRoom(null);
       
-      // Automatically try to rejoin after 1 second
-      setTimeout(() => {
-        socket.emit('join-problem', problemId);
-      }, 1000);
+      // DON'T automatically rejoin - backend already puts user back in waiting list
+      // setTimeout(() => {
+      //   socket.emit('join-problem', problemId);
+      // }, 1000);
     };
 
     // Set up event listeners
